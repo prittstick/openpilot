@@ -1,9 +1,7 @@
 import jwt
 import os
-import requests
 from datetime import datetime, timedelta, UTC
 from openpilot.system.hardware.hw import Paths
-from openpilot.system.version import get_version
 
 API_HOST = os.getenv('API_HOST', 'https://api.commadotai.com')
 
@@ -12,21 +10,26 @@ KEYS = {"id_rsa": "RS256",
         "id_ecdsa": "ES256"}
 
 
+class ApiDisabledError(RuntimeError):
+  """privacy: this build never talks to comma's API backend."""
+
+
 class Api:
   def __init__(self, dongle_id):
     self.dongle_id = dongle_id
     self.jwt_algorithm, self.private_key, _ = get_key_pair()
 
   def get(self, *args, **kwargs):
-    return self.request('GET', *args, **kwargs)
+    raise ApiDisabledError("comma API access is disabled in this build")
 
   def post(self, *args, **kwargs):
-    return self.request('POST', *args, **kwargs)
+    raise ApiDisabledError("comma API access is disabled in this build")
 
   def request(self, method, endpoint, timeout=None, access_token=None, **params):
-    return api_get(endpoint, method=method, timeout=timeout, access_token=access_token, **params)
+    raise ApiDisabledError(f"comma API access is disabled in this build: {endpoint}")
 
   def get_token(self, payload_extra=None, expiry_hours=1):
+    # local JWT signing only, no network involved
     now = datetime.now(UTC).replace(tzinfo=None)
     payload = {
       'identity': self.dongle_id,
@@ -43,15 +46,8 @@ class Api:
 
 
 def api_get(endpoint, method='GET', timeout=None, access_token=None, session=None, **params):
-  headers = {}
-  if access_token is not None:
-    headers['Authorization'] = "JWT " + access_token
-
-  headers['User-Agent'] = "openpilot-" + get_version()
-
-  # TODO: add session to Api
-  req = requests if session is None else session
-  return req.request(method, API_HOST + "/" + endpoint, timeout=timeout, headers=headers, params=params)
+  # privacy: no data transfer with comma's backend, no matter the caller
+  raise ApiDisabledError(f"comma API access is disabled in this build: {endpoint}")
 
 
 def get_key_pair() -> tuple[str, str, str] | tuple[None, None, None]:

@@ -1,14 +1,10 @@
 from enum import IntEnum
 import os
-import requests
 import threading
 import time
 
-from openpilot.common.api import api_get
 from openpilot.common.params import Params
 from openpilot.common.swaglog import cloudlog
-from openpilot.system.athena.registration import UNREGISTERED_DONGLE_ID
-from openpilot.selfdrive.ui.lib.api_helpers import get_token
 
 
 class PrimeType(IntEnum):
@@ -23,14 +19,12 @@ class PrimeType(IntEnum):
 
 
 class PrimeState:
-  FETCH_INTERVAL = 5.0  # seconds between API calls
-  API_TIMEOUT = 10.0  # seconds for API requests
+  FETCH_INTERVAL = 5.0  # seconds between checks in the worker thread
   SLEEP_INTERVAL = 0.5  # seconds to sleep between checks in the worker thread
 
   def __init__(self):
     self._params = Params()
     self._lock = threading.Lock()
-    self._session = requests.Session()  # reuse session to reduce SSL handshake overhead
     self.prime_type: PrimeType = self._load_initial_state()
 
     self._running = False
@@ -46,20 +40,8 @@ class PrimeState:
     return PrimeType.UNKNOWN
 
   def _fetch_prime_status(self) -> None:
-    dongle_id = self._params.get("DongleId")
-    if not dongle_id or dongle_id == UNREGISTERED_DONGLE_ID:
-      return
-
-    try:
-      identity_token = get_token(dongle_id)
-      response = api_get(f"v1.1/devices/{dongle_id}", timeout=self.API_TIMEOUT, access_token=identity_token, session=self._session)
-      if response.status_code == 200:
-        data = response.json()
-        is_paired = data.get("is_paired", False)
-        prime_type = data.get("prime_type", 0)
-        self.set_type(PrimeType(prime_type) if is_paired else PrimeType.UNPAIRED)
-    except Exception as e:
-      cloudlog.error(f"Failed to fetch prime status: {e}")
+    # privacy: this build never polls comma's backend for prime/pairing status
+    return
 
   def set_type(self, prime_type: PrimeType) -> None:
     with self._lock:
