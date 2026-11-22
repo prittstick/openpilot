@@ -4,8 +4,6 @@ import time
 import signal
 import serial
 import struct
-import requests
-import urllib.parse
 from datetime import datetime, UTC
 
 from cereal import messaging
@@ -42,24 +40,10 @@ def add_ubx_checksum(msg: bytes) -> bytes:
   return msg + bytes([A, B])
 
 def get_assistnow_messages(token: str) -> list[bytes]:
-  # make request
-  # TODO: implement adding the last known location
-  r = requests.get("https://online-live2.services.u-blox.com/GetOnlineData.ashx", params=urllib.parse.urlencode({
-    'token': token,
-    'gnss': 'gps,glo',
-    'datatype': 'eph,alm,aux',
-  }, safe=':,'), timeout=5)
-  assert r.status_code == 200, "Got invalid status code"
-  dat = r.content
-
-  # split up messages
-  msgs = []
-  while len(dat) > 0:
-    assert dat[:2] == b"\xB5\x62"
-    msg_len = 6 + (dat[5] << 8 | dat[4]) + 2
-    msgs.append(dat[:msg_len])
-    dat = dat[msg_len:]
-  return msgs
+  # privacy: no third-party data transfer. The u-blox AssistNow online
+  # service (online-live2.services.u-blox.com) is never contacted.
+  cloudlog.warning("AssistNow disabled (privacy build)")
+  return []
 
 
 class TTYPigeon:
