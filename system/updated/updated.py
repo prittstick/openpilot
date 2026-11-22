@@ -204,26 +204,9 @@ def finalize_update() -> None:
 
 
 def handle_agnos_update() -> None:
-  from openpilot.system.hardware.tici.agnos import flash_agnos_update, get_target_slot_number
-
-  cur_version = HARDWARE.get_os_version()
-  updated_version = run(["bash", "-c", r"unset AGNOS_VERSION && source launch_env.sh && \
-                          echo -n $AGNOS_VERSION"], OVERLAY_MERGED).strip()
-
-  cloudlog.info(f"AGNOS version check: {cur_version} vs {updated_version}")
-  if cur_version == updated_version:
-    return
-
-  # prevent an openpilot getting swapped in with a mismatched or partially downloaded agnos
-  set_consistent_flag(False)
-
-  cloudlog.info(f"Beginning background installation for AGNOS {updated_version}")
-  set_offroad_alert("Offroad_NeosUpdate", True)
-
-  manifest_path = os.path.join(OVERLAY_MERGED, "system/hardware/tici/agnos.json")
-  target_slot_number = get_target_slot_number()
-  flash_agnos_update(manifest_path, target_slot_number, cloudlog)
-  set_offroad_alert("Offroad_NeosUpdate", False)
+  # privacy: never flash OS images from comma's servers (commadist.azureedge.net).
+  # A fork has no business auto-flashing AGNOS; flash manually if ever needed.
+  cloudlog.info("AGNOS update skipped (privacy build)")
 
 
 
