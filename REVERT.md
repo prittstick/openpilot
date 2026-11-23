@@ -51,6 +51,7 @@ sends.
 | --- | --- |
 | Driver monitoring model off, constant benign state published | `selfdrive/monitoring/dmonitoringd.py`, `system/manager/process_config.py` |
 | Registration never calls comma's backend | `system/athena/registration.py` |
+| Driving allowed while unregistered (no registration gate) | `system/hardware/hardwared.py` |
 | athenad / uploader / webrtcd never run | `system/manager/manager.py` |
 | Crash reporting (sentry) hard-off | `system/sentry.py` |
 | Comma API client stubbed out | `common/api.py` |
@@ -64,3 +65,10 @@ Known trade-offs: Comma Connect pairing/prime is nonfunctional (by design);
 the driver camera preview shows stale data if opened; GPS cold-start fix is
 slower without assistance data; some repo CI tests fail (harmless for a
 private fork).
+
+Device note: comma 3X units built before 2/28/24 have no factory dongle ID
+in `/persist`. With this build they stay permanently "UnregisteredDevice"
+(stock would obtain an ID by sending IMEI/serial to comma's backend). This
+build removes the "must be registered" onroad gate, so driving works anyway;
+reverting to stock `master` restores that gate and the device will register
+with comma on next boot with internet to drive again.

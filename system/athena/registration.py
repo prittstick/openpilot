@@ -2,8 +2,6 @@
 from pathlib import Path
 
 from openpilot.common.params import Params
-from openpilot.selfdrive.selfdrived.alertmanager import set_offroad_alert
-from openpilot.system.hardware import PC
 from openpilot.system.hardware.hw import Paths
 from openpilot.common.swaglog import cloudlog
 
@@ -36,7 +34,6 @@ def register(show_spinner=False) -> str | None:
     cloudlog.warning("no dongle_id available, staying unregistered (offline build)")
 
   params.put("DongleId", dongle_id)
-  set_offroad_alert("Offroad_UnregisteredHardware", (dongle_id == UNREGISTERED_DONGLE_ID) and not PC)
   return dongle_id
 
 
